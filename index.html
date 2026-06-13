@@ -1,0 +1,1797 @@
+
+
+```
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>物種身分卡 | XR生態共感前導手冊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --deep-sea-blue: #050a12;
+            --panel-bg: #141419;
+            --card-bg: #0b1d3a;
+            --neon-green: #39ff14;
+            --electric-purple: #8a2be2;
+            --ocean-blue: #48cae4;
+            --earth-gold: #d4a373;
+            
+            --accent-fungi: #00ffcc;
+            --accent-insect: #ffaa00;
+            --accent-cat: #ff3333;
+            --accent-bird: #33aaff;
+
+            /* 水之息深海新色系 */
+            --accent-jelly: #38bdf8;
+            --accent-dolphin: #818cf8;
+            --accent-fish: #34d399;
+            --accent-orca: #f87171;
+
+            /* 天之眼高空新色系 */
+            --accent-dragonfly: #a855f7;
+            --accent-bee: #eab308;
+            --accent-eagle: #06b6d4;
+            --accent-projection: #ec4899;
+            
+            --text-light: #e0e6ed;
+            --text-muted: #a0aec0;
+            --active-color: var(--neon-green);
+
+            /* 移植自 tea.html 的變數 */
+            --tea-primary: #00ff66;
+            --tea-secondary: #9d4edd;
+            --tea-card-bg: #131a2c;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--deep-sea-blue);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* 複眼濾鏡特效 */
+        .compound-eye-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(circle, transparent 20%, var(--deep-sea-blue) 20%, var(--deep-sea-blue) 80%, transparent 80%),
+                radial-gradient(circle, transparent 20%, var(--deep-sea-blue) 20%, var(--deep-sea-blue) 80%, transparent 80%);
+            background-size: 12px 12px;
+            background-position: 0 0, 6px 6px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 9999;
+        }
+
+        .compound-eye-active .compound-eye-overlay {
+            opacity: 0.15;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* 頂部導覽 */
+        header {
+            text-align: center;
+            padding: 15px 10px;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            border: 1px solid #2d2d3d;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, var(--earth-gold), var(--ocean-blue), var(--electric-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* 複眼切換按鈕樣式 */
+        .view-toggle-btn {
+            background: linear-gradient(135deg, var(--tea-primary), var(--tea-secondary));
+            color: #000;
+            font-weight: bold;
+            font-size: 0.75rem;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .view-toggle-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 0.5);
+            color: #fff;
+        }
+
+        /* 流程進度條 */
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 15px 20px 15px;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .step-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #152238;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: bold;
+            z-index: 2; transition: all 0.4s ease;
+            color: var(--text-muted);
+        }
+
+        .step-dot.active {
+            border-color: var(--neon-green);
+            background: var(--deep-sea-blue);
+            color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        .step-dot.completed {
+            border-color: var(--ocean-blue);
+            background: var(--ocean-blue);
+            color: var(--deep-sea-blue);
+        }
+
+        /* 頁面轉場效果 */
+        .flow-section {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .flow-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 提示框 */
+        .info-box {
+            background: rgba(57, 255, 20, 0.06);
+            border-left: 4px solid var(--neon-green);
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            color: #cbd5e0;
+        }
+
+        /* 階段一：物種選擇卡片與按鈕格子通用樣式 */
+        .card-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .species-card {
+            border-radius: 14px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .species-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* 穹頂卡片內建 RWD 圖片樣式 */
+        .species-card-img-wrapper {
+            width: 100%;
+            height: 140px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .species-card-img-wrapper img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+
+        /* 展廳大廳導覽專用樣式 */
+        .lobby-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .lobby-btn {
+            background: #141419;
+            border: 2px solid #2d2d3d;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lobby-btn:active { transform: scale(0.97); }
+
+        .lobby-btn::after {
+            content: '→';
+            position: absolute; right: 20px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem; color: var(--text-muted);
+        }
+
+        .lobby-btn-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .lobby-btn-desc { font-size: 0.8rem; color: var(--text-muted); max-width: 85%; }
+
+        /* 詳細資訊面板樣式 */
+        .info-panel {
+            background-color: var(--panel-bg);
+            border-radius: 14px;
+            border: 1px solid #2d2d3d;
+            padding: 15px;
+        }
+
+        .info-detail-block {
+            display: none;
+        }
+        .info-detail-block.active {
+            display: block;
+        }
+
+        /* groundweb & oceanweb & skyweb 手機版自訂樣式 */
+        .groundweb-mobile-content, .oceanweb-mobile-content, .skyweb-mobile-content {
+            margin-top: 15px;
+        }
+        
+        .gw-hero-header, .ow-hero-header, .sw-hero-header {
+            text-align: center; padding: 25px 15px; border-radius: 10px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .gw-hero-header h1, .ow-hero-header h1, .sw-hero-header h1 { font-size: 1.8rem; font-weight: 700; color: #ffffff; letter-spacing: 4px; margin-bottom: 8px; }
+        
+        .gw-work-card, .ow-work-card, .sw-work-card {
+            background-color: #1a1a22; border-radius: 12px; overflow: hidden; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column;
+        }
+        .gw-work-image, .ow-work-image, .sw-work-image { width: 100%; height: 180px; background-color: #242f3a; }
+        .gw-work-image img, .ow-work-image img, .sw-work-image img { width: 100%; height: 100%; object-fit: cover; }
+        .gw-work-info, .ow-work-info, .sw-work-info { padding: 20px 15px; }
+
+        .gw-badge, .ow-badge, .sw-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 10px; font-weight: bold; }
+        .gw-badge { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-fungi); }
+        .ow-badge { background-color: rgba(14, 165, 233, 0.15); color: var(--ocean-blue); }
+        .sw-badge { background-color: rgba(6, 182, 212, 0.15); color: var(--accent-eagle); }
+
+        .gw-work-info h3, .ow-work-info h3, .sw-work-info h3 { font-size: 1.2rem; color: #ffffff; margin-bottom: 2px; }
+        .gw-work-info h4, .ow-work-info h4, .sw-work-info h4 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; font-weight: 400; }
+        .gw-work-info p, .ow-work-info p, .sw-work-info p { color: #cbd5e1; font-size: 0.8rem; text-align: justify; margin-bottom: 10px; line-height: 1.6; }
+
+        /* 互動前導 Canvas 模擬器專用配置 */
+        .interactive-panel { background-color: var(--panel-bg); border-radius: 14px; border: 1px solid #2d2d3d; overflow: hidden; display: flex; flex-direction: column; }
+        .nav-tabs { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding: 12px; background-color: rgba(0,0,0,0.2); border-bottom: 1px solid #2d2d3d; -webkit-overflow-scrolling: touch; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: #1e1e24; border: 1px solid #2d2d3d; color: #8a8a9e; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; white-space: nowrap; flex-shrink: 0; }
+        
+        .tab-btn.active[data-target="fungi"] { border: 1px solid var(--accent-fungi); color: var(--accent-fungi); background: #162624; }
+        .tab-btn.active[data-target="insect"] { border: 1px solid var(--accent-insect); color: var(--accent-insect); background: #262016; }
+        .tab-btn.active[data-target="cat"] { border: 1px solid var(--accent-cat); color: var(--accent-cat); background: #261616; }
+        .tab-btn.active[data-target="bird"] { border: 1px solid var(--accent-bird); color: var(--accent-bird); background: #162026; }
+        .tab-btn.active[data-target="jelly"] { border: 1px solid var(--accent-jelly); color: var(--accent-jelly); background: #0c4a6e; }
+        .tab-btn.active[data-target="dolphin"] { border: 1px solid var(--accent-dolphin); color: var(--accent-dolphin); background: #1e1b4b; }
+        .tab-btn.active[data-target="fish"] { border: 1px solid var(--accent-fish); color: var(--accent-fish); background: #064e3b; }
+        .tab-btn.active[data-target="orca"] { border: 1px solid var(--accent-orca); color: var(--accent-orca); background: #4c0519; }
+        .tab-btn.active[data-target="dragonfly"] { border: 1px solid var(--accent-dragonfly); color: var(--accent-dragonfly); background: #3b0764; }
+        .tab-btn.active[data-target="bee"] { border: 1px solid var(--accent-bee); color: var(--accent-bee); background: #451a03; }
+        .tab-btn.active[data-target="eagle"] { border: 1px solid var(--accent-eagle); color: var(--accent-eagle); background: #164e63; }
+        .tab-btn.active[data-target="projection"] { border: 1px solid var(--accent-projection); color: var(--accent-projection); background: #4c051e; }
+
+        .preview-area { width: 100%; height: 300px; position: relative; background-color: #050507; overflow: hidden; }
+        .display-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: none; }
+        .display-container.active { display: block; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        #insectContainer { background: radial-gradient(circle, #2a2215 0%, #050505 100%); display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        .macro-world { text-align: center; transition: transform 0.3s ease; width: 90%; }
+        .floor-texture { font-size: 13px; font-weight: bold; color: #3e3323; margin-bottom: 12px; letter-spacing: 1px; }
+        .bug-avatar { width: 32px; height: 32px; background: var(--accent-insect); border-radius: 50%; margin: 0 auto; box-shadow: 0 0 15px var(--accent-insect); transition: all 0.3s ease; }
+        .road { position: absolute; bottom: 0; width: 100%; height: 120px; background: #111116; border-top: 3px solid #333; }
+        .headlights { position: absolute; top: 25px; right: -150px; width: 150px; height: 50px; background: linear-gradient(to left, rgba(255,255,255,0.8), rgba(255,255,255,0)); clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 80%); }
+        .cat-pawn { position: absolute; bottom: 25px; left: 15%; width: 22px; height: 22px; background: #ff5555; border-radius: 50%; box-shadow: 0 0 15px #ff3333; }
+        .alert-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 0, 0, 0.3); opacity: 0; pointer-events: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; color: #fff; font-weight: bold; }
+        .panorama-view { width: 100%; height: 100%; background-image: url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center center; background-repeat: repeat-x; display: flex; justify-content: center; align-items: center; position: relative; }
+        .panorama-view::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.25); pointer-events: none; }
+        .panorama-title { color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.9); font-size: 0.95rem; font-weight: bold; z-index: 2; background: rgba(0, 0, 0, 0.5); padding: 5px 10px; border-radius: 50px; }
+        .wind-particle { position: absolute; background: rgba(255,255,255,0.6); height: 2px; pointer-events: none; z-index: 3; }
+        .hint-text { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.75); padding: 3px 10px; border-radius: 15px; pointer-events: none; z-index: 4; white-space: nowrap; text-align: center; max-width: 90%; }
+
+        .project-info { padding: 15px; border-top: 1px solid #2d2d3d; }
+        .project-content { display: none; }
+        .project-content.active { display: block; }
+        .project-title { font-size: 1.05rem; margin-bottom: 4px; font-weight: bold; }
+        .project-desc { font-size: 0.75rem; line-height: 1.5; color: #a0aec0; margin-bottom: 8px; }
+        .score-board { background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 10px; display: flex; justify-content: space-between; flex-direction: column; gap: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .score-row { display: flex; justify-content: space-between; width: 100%; }
+        .control-group label { display: block; font-size: 0.75rem; margin-bottom: 4px; color: #a0aec0; }
+        .control-group input[type="range"] { width: 100%; height: 20px; accent-color: var(--active-color); background: #1e1e24; border-radius: 8px; }
+
+        .btn { display: block; width: 100%; padding: 12px; background: transparent; border: 1px solid var(--neon-green); color: var(--neon-green); border-radius: 25px; font-size: 0.95rem; font-weight: bold; text-align: center; margin-top: 15px; cursor: pointer; }
+        .btn-primary { background: var(--neon-green); color: var(--deep-sea-blue); border: none; }
+        .checklist { list-style: none; margin: 15px 0; }
+        .checklist li { background: rgba(255,255,255,0.02); margin-bottom: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); display: flex; gap: 10px; font-size: 0.8rem; }
+        .pass-badge { border: 2px dashed var(--neon-green); padding: 20px; border-radius: 50%; width: 150px; height: 150px; margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        /* --------------------------------------------------
+           ★ 完全移植自 artist.html 的專屬選單標籤切換與視覺樣式
+        --------------------------------------------------- */
+        .artist-nav-tabs {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 4px;
+            border-radius: 30px;
+            margin-bottom: 24px;
+        }
+        .artist-tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #71717a;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .artist-tab-btn.active[data-zone="earth"] { background: #10b981; color: #fff; box-shadow: 0 0 15px rgba(16,185,129,0.3); }
+        .artist-tab-btn.active[data-zone="water"] { background: #0ea5e9; color: #fff; box-shadow: 0 0 15px rgba(14,165,233,0.3); }
+        .artist-tab-btn.active[data-zone="sky"] { background: #6366f1; color: #fff; box-shadow: 0 0 15px rgba(99,102,241,0.3); }
+        
+        .artist-sub-panel { display: none; }
+        .artist-sub-panel.active { display: block; animation: fadeIn 0.4s ease; }
+
+        /* --------------------------------------------------
+           ★ 移植自 tea.html 的整合專屬樣式 (配合手機寬度調整)
+        --------------------------------------------------- */
+        .tea-section-title {
+            font-size: 1.3rem;
+            margin: 2.5rem 0 1.5rem 0;
+            text-align: center;
+            position: relative;
+            font-weight: bold;
+            color: #fff;
+        }
+        .tea-section-title::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 3px;
+            background: var(--tea-primary);
+            margin: 0.4rem auto 0;
+            border-radius: 2px;
+        }
+        .tea-showcase-card {
+            background: var(--tea-card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .tea-image-placeholder {
+            width: 100%;
+            height: 180px;
+            background-color: #1e293b;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .tea-image-caption {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(19, 26, 44, 0.9);
+            padding: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .tea-showcase-detail {
+            padding: 1.2rem;
+        }
+        .tea-showcase-detail h3 {
+            color: var(--tea-primary);
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 0.4rem;
+        }
+        .tea-showcase-detail p {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+        .tea-kol-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .tea-kol-card {
+            background: var(--tea-card-bg);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            border-top: 3px solid var(--tea-secondary);
+        }
+        .tea-avatar-placeholder {
+            width: 70px; height: 70px;
+            background-color: #334155;
+            border-radius: 50%;
+            margin: 0 auto 0.7rem;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--tea-primary);
+        }
+        .tea-kol-tag {
+            display: inline-block;
+            background: rgba(157, 78, 221, 0.2);
+            color: #d8b4fe;
+            font-size: 0.65rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 10px;
+            margin-bottom: 0.3rem;
+        }
+        .tea-workshop-card {
+            background: var(--tea-card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        .tea-workshop-content {
+            padding: 1.2rem;
+        }
+        .tea-badge {
+            background: var(--tea-primary);
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-bottom: 0.4rem;
+            display: inline-block;
+        }
+        .tea-tabs-container {
+            background: var(--tea-card-bg);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .tea-tabs-menu {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+        }
+        .tea-tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .tea-tab-btn.active {
+            color: var(--tea-primary);
+            border-bottom: 2px solid var(--tea-primary);
+        }
+        .tea-tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .tea-tab-content.active {
+            display: block;
+        }
+        .tea-academic-highlight {
+            background: rgba(0, 255, 102, 0.05);
+            border-left: 4px solid var(--tea-primary);
+            padding: 0.8rem;
+            margin-top: 0.8rem;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.75rem;
+        }
+        .tea-cta-box {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .tea-btn-large {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--tea-secondary), #7b2cbf);
+            color: white;
+            text-decoration: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        footer { text-align: center; padding: 15px 0; font-size: 0.7rem; color: #444; border-top: 1px solid rgba(255,255,255,0.03); margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="compound-eye-overlay"></div>
+
+    <div class="container">
+        
+        <header id="main-header">
+            <div class="logo">感官複眼：重構地球的棲息光譜</div>
+            <div class="subtitle">生態共感 XR 影展前導系統</div>
+            <button class="view-toggle-btn" onclick="toggleTeaViewMode()">👁️ 切換複眼視角</button>
+        </header>
+
+        <div class="progress-bar" id="main-progress">
+            <div class="step-dot active" id="dot-1">1</div>
+            <div class="step-dot" id="dot-1-5">1.5</div>
+            <div class="step-dot" id="dot-2">2</div>
+            <div class="step-dot" id="dot-3">3</div>
+        </div>
+
+        <section id="artist-page-section" class="flow-section">
+            <div class="text-center mb-5">
+                <h2 class="text-xl font-black text-white tracking-wide">🎭 隱形網絡：生態共生之境</h2>
+                <p class="text-xs text-gray-400 mt-1">打破人類視角 · 連結科學與沉浸藝術</p>
+            </div>
+
+            <div class="artist-nav-tabs">
+                <button onclick="switchArtistZone('earth')" class="artist-tab-btn active" data-zone="earth">地之脈</button>
+                <button onclick="switchArtistZone('water')" class="artist-tab-btn" data-zone="water">水之息</button>
+                <button onclick="switchArtistZone('sky')" class="artist-tab-btn" data-zone="sky">天之眼</button>
+            </div>
+
+            <div id="artist-panel-earth" class="artist-sub-panel active">
+                <div class="mb-5 p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
+                    <h4 class="text-sm font-bold text-emerald-400 mb-1">🌿 地之脈核心理念與規格</h4>
+                    <p class="text-xs text-gray-400 mb-2">前半段透過數位孿生技術化身黑土地下的真菌網絡，後半段延伸至真實環境，切換至瀕危石虎現場。</p>
+                    <div class="text-[11px] text-gray-500">
+                        • <strong>硬體：</strong>HTC VIVE Focus 3 高解析頭顯<br>
+                        • <strong>技術：</strong>即時動態追蹤、生物電訊號視覺化演算法、全景重構
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-6">
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/fungi ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Merlin Sheldrake</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-2">靈魂人物 / 英國生物學家</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Fungi: The Web of Life》（菌絲網路的微觀脈動）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">梅林·謝德雷克是一位英國生物學家、作家，擁有劍橋大學的熱帶生態學博士學位。他也是暢銷書《植物知道生命的答案》與《真菌微宇宙》（Entangled Life）的作者。他不僅是科學家，更是將科學帶入藝術領域的跨界推手。在這部紀錄片中，他透過與 IMAX 團隊合作的精準延時攝影（Time-lapse photography），將枯燥的地下菌絲網絡轉化為兼具視覺震撼與哲學思考的沉浸式藝術巨作。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/Metamorphosis ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Mika Johnson</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-2">跨領域導演 / Black Sun Productions</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Metamorphosis VR》（變形記）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">這部作品由導演 Mika Johnson 領軍，改編自卡夫卡的經典文學《變形記》。Mika Johnson 是一位專注於將虛擬實境與文學、歷史結合的跨領域導演。他帶領的團隊利用精細的空間建模與聲音設計，成功將卡夫卡筆下那種孤獨、荒謬且變形後的空間感具象化，讓體驗者能透過一隻蟑螂的微觀視角，重新審視人類社會的日常物件。講述格雷戈爾·薩姆沙變成蟑螂的冒險故事。體驗者必須在一個龐大的、與人類大小相當的世界中穿梭，解開謎題、克服障礙並與其他昆蟲互動。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/玄奘大學ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">玄奘大學團隊</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-2">在地行動創作者</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《虛擬實境沉浸體驗》—— 親臨動物保育現場</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">這是台灣在地學術與社會實踐結合的科技藝術成果。由玄奘大學師生團隊自主研發，透過與動物保育專家合作，將「石虎」面臨的路殺、捕獸夾等生存危機轉化為 VR 互動腳本。創作者利用第一人稱視角的動作捕捉與模擬，成功將環境教育轉化為高度感官共情的敘事體驗。觀眾戴上眼鏡降低高度，化身瀕危動物「石虎」。在四周蟲鳴鳥叫中尋找食物，下一秒卻誤踩捕獸夾，引導大眾感同身受動物危機四伏的處境。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/animalook.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">STYLY / 日本東急度假村</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-2">野生動物視角研發團隊</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《AnimaLOOK!!》—— 動物視角森林探險</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">STYLY 是日本極具代表性的 XR（VR/AR/MR）創意平台，致力於推動「將 XR 融入日常生活」的藝術運動。其背後的藝術家團隊擅長利用空間運算技術（Spatial Computing），打破人類既有的視覺光譜。在《AniMallook》中，他們利用濾鏡與色彩編碼技術，科學地重現了鹿等野生動物的真實視覺（如紅綠色盲視角），是日本科技藝術界將「生態意識」融入旅遊觀光的先驅作品。作品跳脫人類的視角，戴上頭顯化身為森林裡的野生鹿等動物。在樹影與溪流間穿梭，不再是旁觀者，而是成為生態系統的一部分。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="artist-panel-water" class="artist-sub-panel">
+                <div class="mb-5 p-4 bg-sky-950/20 border border-sky-500/20 rounded-xl">
+                    <h4 class="text-sm font-bold text-sky-400 mb-1">🌊 水之息核心理念與規格</h4>
+                    <p class="text-xs text-gray-400 mb-2">深入極限水域環境，融合水母微觀尺度、海豚聲納、魚群演化以及貨輪噪音對海洋哺乳類的衝擊。</p>
+                    <div class="text-[11px] text-gray-500">
+                        • <strong>實體配置：</strong>科博館植物園熱帶雨林水池旁，具備真實潮濕水氣與環境流水聲<br>
+                        • <strong>核心技術：</strong>聽覺聲納轉線性幾何、Flocking 魚群演化力場
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-6">
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/drop ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">(Adam May) & Vision3 工作室</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">視覺特效巨頭 / 微距攝影大師 Peter Parks</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Drop in the ocean》（潛入微距深海與海洋污染危機）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">亞當·梅是英國沉浸式科技（XR/VR/3D）領域的頂尖導演與製作總監。他所屬的 Vision3 工作室總部位於倫敦，是全球 3D 電影與 VR 敘事的先驅，曾參與多部好萊塢大片的 3D 立體視覺製作（如《地心引力》、《怪獸與牠們的產地》），並長期與華納兄弟、大衛·艾登堡祿爵士（Sir David Attenborough）等頂級 IP 合作。取材自奧斯卡獲獎微距攝影師Peter Parks檔案，觀眾縮小至浮游生物視角，騎乘水母、邂逅棱皮龜，直面全球海洋的塑膠污染危機。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/Mars ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Tigertron 工作室</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">美國創意工作室 / 創辦人 James Mielke</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Jupiter and Mars》（沉眠未來的海底遺跡探索）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">Tigertron 是一家由遊戲界資深創意總監 James Mielke 創立、帶有強烈「環保使命感」的創意工作室。他們的藝術風格深受「賽博龐克（Cyberpunk）」與「亞特蘭提斯神話」的啟發。團隊將未來的末日海洋描繪得絢麗而哀傷，海豚主角發出的聲納在被淹沒的人類摩天大樓間迴盪，霓虹色彩的視覺設計讓這部解謎遊戲呈現出極高質感的迷幻電子藝術風格。以人類消失後的末日海底文明為舞台，玩家扮演名為「朱比特」的海豚與夥伴「瑪爾斯」關閉汙染工業設備，透過獨特聲光體驗嶄新的海底異世界。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/out ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Sophie Ansel</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">VR 電影導演 / 法國獨立記者</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Out Of The Blue》（世代傳承的海洋重生希望）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">索菲·安塞爾是一位法國著名的記者、作家與 VR 電影導演。她長期關注人權與全球環境議題，擅長以「富有情感的女性視角」進行敘事。在《Out Of The Blue》中，她沒有採用說教的方式，而是透過墨西哥 Cabo Pulmo 漁村一個 8 歲小孩的清澈雙眼，捕捉海洋從一片死寂到因為保育而重新煥發生機的奇蹟。其優美的鏡頭語言和極具渲染力的現場收音，讓該片在 SIGGRAPH Asia 等國際科技藝術大展中獲得極高評價。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/critical.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Critical Distance 團隊</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2">AR 沉浸式互動團隊</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Critical Distance》（聆聽瀕危虎鯨的生存鳴響）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">Vision 3 是英國屢獲殊榮的沉浸式敘事工作室，曾參與《地心引力》（Gravity）等好萊塢大片的 3D 視覺製作。在這部 AR 作品中，他們的技術藝術家將看不見的「鯨魚聲波（迴聲定位）」和「人類噪音污染」轉化為肉眼可見的流體動力學粒子特效。透過精準的混合實境（MR）互動，讓觀眾能「觸摸」到聲音，是一部將頂級電影視覺工業技術應用於海洋保育的傑作。透過 8 歲虎鯨 Kiki 的視角，讓觀眾與迴聲定位聲波互動，切身體會噪音污染以及極度瀕危的南部定居虎鯨群在薩利甚海面臨的生存危險。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="artist-panel-sky" class="artist-sub-panel">
+                <div class="mb-5 p-4 bg-indigo-950/20 border border-indigo-500/20 rounded-xl">
+                    <h4 class="text-sm font-bold text-indigo-400 mb-1">🦅 天之眼核心理念與規格</h4>
+                    <p class="text-xs text-gray-400 mb-2">開啟野生動物的天空超感官，解密蜻蜓廣角、工蜂紫外線波段花蜜定位與白尾海雕冰川消融史。</p>
+                    <div class="text-[11px] text-gray-500">
+                        • <strong>特展硬體：</strong>科博館特展懸吊機械結構 + 高空風阻環境模擬器<br>
+                        • <strong>核心技術：</strong>六角複眼網格渲染（Compound Eye Mesh）、時空環境色相矩陣調控
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-6">
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/InTheEyes ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Marshmallow Laser Feast (MLF)</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2">英國沉浸藝術巨頭</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《In the eyes of the animal》（化身非人類物種的感官交響）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">MLF 是來自英國倫敦、享譽國際的頂尖科技藝術巨頭。他們的作品專注於「超越人類感知（Beyond Human Perception）」的體驗。團隊成員包括多媒體藝術家、編程大師與感官設計師。在這部作品中，他們利用 光達掃描（LiDAR）、360 度無人機和 CT 掃描技術，創造了一個完全由幾何點雲構成的奇幻森林。MLF 透過觸覺背心和特製耳機，讓人類得以體驗蚊子的二氧化碳感知、青蛙的動態視覺，是科技藝術史上的里程碑之作。本次他們利用高精度光達與點雲掃瞄重構森林，引導使用者化身為蚊子、蜻蜓、青蛙、貓頭鷹等不同物種，探索非人類物種如何感知環境與動態視角。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/bee ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Varsav Studios</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2">波蘭創意工作室</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《BEE》（微觀世界裡的蜂巢大冒險）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">Varsav 是一家總部位於華沙的工作室，擅長以「動物視角」作為核心遊戲機制的獨立開發團隊。他們的藝術與技術團隊為了製作這部作品，深入研究了蜜蜂的行為生態學與複眼視覺。透過明亮、充滿活力的色彩美學與輕鬆的音效，成功將微觀的昆蟲世界打造成一場具備環境保育反思的沉浸式冒險。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/eagle ar.png" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">Victor Project 團隊</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2">環境運動團隊 / Jacques-Olivier</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《Eagle》（跟隨白尾海雕衝破冰川雲霄）</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">這個專案是一場「行動藝術與環境科學的完美結合」。Jacques-Olivier 是一位致力於保護瀕危猛禽的環境運動家。他們創紀錄地將輕量化 360 度全景相機固定在白尾海雕「維克多（Victor）」的背上。這部作品的「藝術家」其實是大自然本身與這隻老鷹，團隊則扮演了影像捕捉與敘事者的角色，透過真實的飛行軌跡，帶給人類震撼的冰川消逝視角。</p>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-900/60 rounded-2xl border border-white/5 overflow-hidden">
+                        <img src="image/images.jpg" class="w-full h-44 object-cover">
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold text-white mb-1">國立自然科學博物館團隊</h3>
+                            <p class="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2">虛實整合體感互動研發團隊</p>
+                            <h5 class="text-xs font-bold text-white mb-1">作品：《擬鳥》—— 化身大冠鷲翱翔生態鳳凰谷</h5>
+                            <p class="text-xs text-gray-400 leading-relaxed">本作品由台灣國立自然科學博物館的策展與數位團隊主導開發。創作者結合了 VR 模擬技術與動態體感互動系統，將台灣特有亞種「大冠鷲」的滑翔與熱氣流盤旋習性數位化。透過讓觀眾張開雙臂模擬振翅的互動設計，將生態科普知識轉化為具備身體感知的行為藝術。團隊結合了科博館特展懸吊機械結構，體驗者張開雙手如揮動翅膀，化身大冠鷲在現實與虛擬交錯中翱翔鳳凰谷，具象化候鳥面臨都市玻璃窗殺與霾害避障的殘酷遷徙命運。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn border-gray-600 text-gray-400 mt-10 mb-6" onclick="backToStep1()">← 返回數位展廳分流選單</button>
+        </section>
+
+
+        <section id="step-1-section" class="flow-section active">
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h2 style="font-size: 1.2rem; margin-bottom: 3px;">🧬 選擇數位物種展廳</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">請選定您今日欲探索的感官座標</p>
+            </div>
+
+            <div class="info-box">
+                <strong>🛡️ 天使導覽員提示：</strong><br>
+                考量兒童視力發育，12歲以下兒童單次 VR 體驗時間將嚴格控制在 5-8 分鐘內。現在，請先透過手機模擬釋放你的感官！
+            </div>
+
+            <div class="card-selector">
+                <div class="species-card transition-all duration-300 hover:border-purple-400" onclick="openArtistPage()" style="background: linear-gradient(135deg, #1e1b4b 0%, #0a0a14 100%); border: 2px solid var(--electric-purple); box-shadow: 0 4px 15px rgba(138, 43, 226, 0.25);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 1.1rem; font-weight: bold; color: #fff;">🎭 隱形網絡：生態共生之境</span>
+                        <span class="card-tag" style="background: rgba(138, 43, 226, 0.35); color: #b76eff;">藝術家圖鑑</span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.75rem; color: #cbd5e0; text-align: justify; line-height: 1.5;">點擊下方展區，深入探索各個打破人類視角、連結科學與沉浸藝術的 <strong>幕後藝術家與頂尖創作團隊介紹</strong>。</p>
+                </div>
+
+                <div class="species-card" onclick="select展廳('fungi')" style="background: linear-gradient(135deg, #23140b 0%, #080402 100%); border: 1px solid var(--earth-gold);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 1rem; font-weight: bold; color: var(--earth-gold)">【地之脈】微觀大地位</span>
+                        <span class="card-tag" style="background: rgba(212, 163, 115, 0.2); color: var(--earth-gold);">輔導級 (12+)</span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.75rem; color: #cbd5e0;">第一站探尋地底菌絲網絡；從極低視野醒來模擬變形記；並親臨石虎現場與高空森林探險。</p>
+                </div>
+
+                <div class="species-card" onclick="select展廳('cat')" style="background: linear-gradient(135deg, #071c2d 0%, #01060b 100%); border: 1px solid var(--ocean-blue);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 1rem; font-weight: bold; color: var(--ocean-blue)">【水之息】沉浸水域位</span>
+                        <span class="card-tag" style="background: rgba(72, 202, 228, 0.2); color: var(--ocean-blue);">普遍級</span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.75rem; color: #cbd5e0;">第二站跨越水域。縮小騎乘在發光水母背上漂流；或解密海洋聲納網格與噪音環境衝擊。</p>
+                </div>
+
+                <div class="species-card" onclick="select展廳('bird')" style="background: linear-gradient(135deg, #180c32 0%, #04020a 100%); border: 1px solid var(--electric-purple);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 1rem; font-weight: bold; color: var(--b76eff);">【天之眼】空中生態位</span>
+                        <span class="card-tag" style="background: rgba(138, 43, 226, 0.2); color: #b76eff;">護理級 (6+)</span>
+                    </div>
+                    <p style="margin: 0; font-size: 0.75rem; color: #cbd5e0;">最終站翱翔天際。解密蜻蜓300度複眼網格、蜜蜂紫外線光譜導航與白尾海雕冰川記憶線。</p>
+                </div>
+
+                <div class="species-card" style="background: linear-gradient(135deg, #112211 0%, #030a03 100%); border: 1px solid var(--accent-fungi); cursor: default;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 1rem; font-weight: bold; color: var(--accent-fungi)">穹頂影院 《Fungi: The Web of Life》</span>
+                        <span class="card-tag" style="background: rgba(0, 255, 204, 0.15); color: var(--accent-fungi);">全齡適合</span>
+                    </div>
+                    <div class="species-card-img-wrapper">
+                        <img src="image/fungimovie.png" alt="穹頂影院">
+                    </div>
+                    <p style="margin: 0; font-size: 0.75rem; color: #cbd5e0; text-align: justify; line-height: 1.5;">地球上絕大多數的生命，皆由一張我們才剛開始理解的龐大隱形網絡所連結。在植物與動物的世界之間，隱藏著另一個世界——真菌王國。從古老的塔斯馬尼亞塔金雨林，到中國雲南省的神祕荒野...</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                
+                <div style="text-align: center; padding: 25px 10px; background: radial-gradient(circle at center, rgba(157, 78, 221, 0.15) 0%, transparent 80%);">
+                    <h2 style="font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; background: linear-gradient(to right, #fff, var(--tea-primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px;">重構視角：XR 生態影展</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); text-align: justify; line-height: 1.6;">一場關於「生態共感」的具身認知實驗。在這裡，人類將脫離單一視角，化身為不同物種，從感官層面理解生物多樣性的脆弱與美。</p>
+                </div>
+
+                <h2 class="tea-section-title">🍵 開幕茶會與多維度展示</h2>
+                <div class="tea-showcase-card">
+                    <div class="tea-image-placeholder" style="background-image: url('image/生態友善輕食.png');">
+                        <div class="tea-image-caption">精心特製：印有微觀地底菌絲網絡與幾何複眼圖騰的造型點心</div>
+                    </div>
+                    <div class="tea-showcase-detail">
+                        <h3>「生態友善」主題輕食</h3>
+                        <p>將抽象的生物科技轉化為舌尖上的體驗。結合科博館植物園的天然氛圍，提供兼具視覺與環保理念的精緻低碳輕食。</p>
+                    </div>
+                </div>
+
+                <div class="tea-showcase-card">
+                    <div class="tea-image-placeholder" style="background-image: url('image/多維度.png');">
+                        <div class="tea-image-caption">現場即時影像：多維度環境數據與昆蟲視角切換牆面</div>
+                    </div>
+                    <div class="tea-showcase-detail">
+                        <h3>多維度視角切換投影牆</h3>
+                        <p>現場巨大的投影牆將同步播放體驗者看到的 VR 畫面，並加入「感官數據視覺化」特效。讓沒戴頭顯的嘉賓也能在昆蟲複眼、海洋聲納與人類視野間自由切換。</p>
+                    </div>
+                </div>
+
+                <div class="tea-kol-container">
+                    <div class="tea-kol-card">
+                        <div class="tea-avatar-placeholder" style="background-image: url('image/吳沁婕.png');"></div>
+                        <span class="tea-kol-tag">生態教育家</span>
+                        <h4 style="font-size: 0.9rem; font-weight: bold;">昆蟲擾西（吳沁婕）</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">現場親自體驗《Bee Simulator》，並透過投影牆向媒體直擊「昆蟲視角」，極具親和力與話題性。</p>
+                    </div>
+                    <div class="tea-kol-card">
+                        <div class="tea-avatar-placeholder" style="background-image: url('image/阿呆.png');"></div>
+                        <span class="tea-kol-tag">影像作家 / 環保代表</span>
+                        <h4 style="font-size: 0.9rem; font-weight: bold;">阿泰與呆呆</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">作為關鍵意見領袖，強力連結大自然與環保人士社群 。</p>
+                    </div>
+                </div>
+
+                <h2 class="tea-section-title">🎨 假日親子手作工作坊</h2>
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.75rem; margin: -0.8rem auto 1.5rem; line-height: 1.5;">
+                    利用週末下午在植物園交誼空間舉辦，將抽象的生物科技轉化為摸得到的實體，極度適合親子共學。
+                </p>
+                
+                <div class="tea-workshop-card">
+                    <div class="tea-image-placeholder" style="height: 140px; background-image: url('image/DIY生物頭盔.png');"></div>
+                    <div class="tea-workshop-content">
+                        <span class="tea-badge">實作設計 1</span>
+                        <h3 style="font-size: 0.95rem; font-weight: bold; margin-bottom: 0.3rem;">「大自然的天之眼」紙結構生物頭盔 DIY</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; line-height: 1.5;">
+                            提供預先裁切好的環保厚紙板模組。小朋友在講師帶領下，彩繪並拼貼出屬於自己的「貓頭鷹」或「蜻蜓」巨型立體面具。做完後還可以戴著面具去排隊體驗《In the Eyes of the Animal》，回家也是最酷的生態紀念品！
+                        </p>
+                    </div>
+                </div>
+
+                <div class="tea-workshop-card">
+                    <div class="tea-image-placeholder" style="height: 140px; background-image: url('image/萬花筒DIY.png');"></div>
+                    <div class="tea-workshop-content">
+                        <span class="tea-badge">實作設計 2</span>
+                        <h3 style="font-size: 0.95rem; font-weight: bold; margin-bottom: 0.3rem;">昆蟲複眼 DIY 萬花筒</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; line-height: 1.5;">
+                            利用多稜鏡片與高密度透明幾何吸管切面，組裝在紙筒內。讓小朋友透過萬花筒觀察植物園的植物，親身體會與理解複眼「動態敏感、形狀碎裂」的視覺科學特徵！
+                        </p>
+                    </div>
+                </div>
+
+                <h2 class="tea-section-title">🏫 校園專場與學術串聯</h2>
+                <div class="tea-tabs-container">
+                    <div class="tea-tabs-menu">
+                        <button class="tea-tab-btn active" onclick="switchTeaAcademicTab(event, 'tea-nchu')">中興大學</button>
+                        <button class="tea-tab-btn" onclick="switchTeaAcademicTab(event, 'tea-thu')">東海大學</button>
+                        <button class="tea-tab-btn" onclick="switchTeaAcademicTab(event, 'tea-fcu')">逢甲大學</button>
+                        <button class="tea-tab-btn" onclick="switchTeaAcademicTab(event, 'tea-nutc')">台中科大</button>
+                    </div>
+
+                    <div id="tea-nchu" class="tea-tab-content active">
+                        <h3 style="font-size: 0.9rem; font-weight: bold; color: var(--tea-primary);">國立中興大學：昆蟲學系 / 生命科學院</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">精準切入「生態共感」與「物種行為」。</p>
+                        <div class="tea-academic-highlight">
+                            <strong>核心焦點：</strong> 結合生物學術，透過高階 XR 技術實證非人類物種的「具身認知」，探索生物多樣性的脆弱與美。
+                        </div>
+                    </div>
+
+                    <div id="tea-thu" class="tea-tab-content">
+                        <h3 style="font-size: 0.9rem; font-weight: bold; color: var(--tea-primary);">東海大學：美術學系 / 數位美學碩士班</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">精準切入「新媒體藝術策展」。</p>
+                        <div class="tea-academic-highlight">
+                            <strong>核心焦點：</strong> 參考國際指標 Recto VRso 2024 的環境感應大展設計，探討數位美學、主視覺幾何語彙與展覽識別系統 (EIS) 的延伸應用。
+                        </div>
+                    </div>
+
+                    <div id="tea-fcu" class="tea-tab-content">
+                        <h3 style="font-size: 0.9rem; font-weight: bold; color: var(--tea-primary);">逢甲大學：建築專業學院 / 室內設計學系</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">精準切入「LBE 場域型虛實整合空間設計」。</p>
+                        <div class="tea-academic-highlight">
+                            <strong>核心焦點：</strong> 實地解析如何在科博館植物園瀑布水池旁規劃三大核心體驗區，並運用 Unity 進行虛擬動線預覽，確保容納 6DOF 空間範圍。
+                        </div>
+                    </div>
+
+                    <div id="tea-nutc" class="tea-tab-content">
+                        <h3 style="font-size: 0.9rem; font-weight: bold; color: var(--tea-primary);">國立台中科技大學：多媒體設計系</h3>
+                        <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.3rem;">精準切入「Unity 開發、3D 粒子系統、MR 互動技術」。</p>
+                        <div class="tea-academic-highlight">
+                            <strong>核心焦點：</strong> 幕後拆解高階電腦主機（RTX 40系列顯卡）運行複雜粒子系統、Meta Quest 3 / Vive Pro 2 硬體整合與 Haptic 觸覺設備的點對點串聯技術。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tea-cta-box">
+                    <p style="margin-bottom: 0.8rem; color: #d8b4fe; font-size: 0.75rem; line-height: 1.4;">🎁 提供中部指標科系師生團體 8 折優惠，更附帶策展人/技術總監 15 分鐘後台技術心法分享！</p>
+                    <a href="#" class="tea-btn-large">立即申請校園師生包場導覽</a>
+                </div>
+
+            </div>
+            </section>
+
+        <section id="step-1-5-section" class="flow-section">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 id="lobby-title" style="font-size: 1.2rem; margin-bottom: 3px; color: var(--active-color);">展廳大廳</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">請選擇您想率先啟動的前導模組</p>
+            </div>
+            <div class="lobby-menu">
+                <div class="lobby-btn" id="btn-to-games" onclick="goToGames()" style="border-color: var(--active-color);">
+                    <div class="lobby-btn-title">🎮 <span id="game-btn-text">小遊戲專區</span></div>
+                    <div class="lobby-btn-desc">進入手機感官模擬器，搶先以非人類感官與大地網絡互動。</div>
+                </div>
+                <div class="lobby-btn" id="btn-to-info" onclick="goToInfo()">
+                    <div class="lobby-btn-title">ℹ️ 展覽詳細資訊專區</div>
+                    <div class="lobby-btn-desc">查閱該展位 XR 作品的創作理念、硬體規格與虛實整合場域配置。</div>
+                </div>
+            </div>
+            <button class="btn border-gray-600 text-gray-500 mt-10" onclick="backToStep1()">← 返回重選展廳</button>
+        </section>
+
+        <section id="info-section" class="flow-section">
+            <div class="info-panel">
+                <div id="info-detail-fungi" class="info-detail-block border-none">
+                    <div class="gw-hero-header" style="background: radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, #141419 80%);">
+                        <h1>地之脈</h1>
+                        <p>解開地下最神秘的「森林之腦」，用動物的眼睛重看世界。</p>
+                    </div>
+                    <div class="groundweb-mobile-content">
+                        <div class="gw-work-card">
+                            <div class="gw-work-image"><img src="image/fungi.png" alt="菌絲網路"></div>
+                            <div class="gw-work-info">
+                                <span class="gw-badge">IMAX 巨幕紀錄片</span>
+                                <h3>🍄 菌絲網路的微觀脈動</h3>
+                                <h4>《Fungi: The Web of Life》</h4>
+                                <p>科學與藝術完美融合的紀錄片。由生物學家 Merlin Sheldrake 領軍，深入塔斯馬尼亞原始雨林，利用震撼的延時攝影將地下菌絲生長與養分傳輸具象化，揭示真菌如何在地下連結萬物。</p>
+                            </div>
+                        </div>
+                        <div class="gw-work-card">
+                            <div class="gw-work-image"><img src="image/meta2.png" alt="變形記 VR"></div>
+                            <div class="gw-work-info">
+                                <span class="gw-badge">VR 冒險解謎</span>
+                                <h3>🪳 《Metamorphosis VR》</h3>
+                                <h4>（變形記）</h4>
+                                <p>講述了格雷戈爾·薩姆沙變成蟑螂的冒險故事。必須在龐大的、與人類大小相當的世界中穿梭，解開謎題、克服障礙並與其他昆蟲互動。</p>
+                            </div>
+                        </div>
+                        <div class="gw-work-card">
+                            <div class="gw-work-image"><img src="image/meta.png" alt="石虎保育現場"></div>
+                            <div class="gw-work-info">
+                                <span class="gw-badge">VR 沉浸體驗</span>
+                                <h3>🐱 玄奘大學《虛擬實境沉浸體驗》</h3>
+                                <h4>—— 親臨動物保育現場</h4>
+                                <p>戴上VR眼鏡化身瀕危石虎，降低高度模擬石虎世界。在幽暗的林間接近雞舍尋找食物，下一秒誤踩捕獸夾，引導反思動物的危機處境。</p>
+                            </div>
+                        </div>
+                        <div class="gw-work-card">
+                            <div class="gw-work-image"><img src="image/animalook.png" alt="AniMallook"></div>
+                            <div class="gw-work-info">
+                                <span class="gw-badge">野生動物視角</span>
+                                <h3>🦌 日本東急度假村《AniMallook》</h3>
+                                <h4>—— 動物視角森林探險</h4>
+                                <p>走進 STYLY 打造的沉浸式 VR 世界。戴上頭顯化身為森林裡的野生動物，在樹影與溪流間穿梭，深刻體悟自身作為生態系統一部分的共生感。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="info-detail-cat" class="info-detail-block border-none">
+                    <div class="ow-hero-header" style="background: radial-gradient(circle at center, rgba(14, 165, 233, 0.25) 0%, #141419 80%);">
+                        <h1>水之息</h1>
+                        <p>深入蔚藍遺跡，潛入瀕危虎鯨與深海鯨鯊的聲光異世界。</p>
+                    </div>
+                    <div class="oceanweb-mobile-content">
+                        <div class="ow-work-card">
+                            <div class="ow-work-image"><img src="image/Drop.jpg" alt="Drop in the ocean"></div>
+                            <div class="ow-work-info">
+                                <span class="ow-badge">VR 虛擬實境體驗</span>
+                                <h3>🌊 Drop in the ocean</h3>
+                                <h4>潛入微距深海與海洋污染危機</h4>
+                                <p>深入海底騎乘水母，邂逅棱皮龜並與鯨鯊面對面。從微小浮游生物的微距視角出發探索海洋，面對困擾海洋的塑膠污染危機。</p>
+                            </div>
+                        </div>
+                        <div class="ow-work-card">
+                            <div class="ow-work-image"><img src="image/critical.png" alt="Critical Distance"></div>
+                            <div class="ow-work-info">
+                                <span class="ow-badge">AR 沉浸式互動</span>
+                                <h3>🐋 Critical Distance</h3>
+                                <h4>聆聽瀕危虎鯨的生存鳴響</h4>
+                                <p>透過 8 歲虎鯨 Kiki 的視角，與聲波迴聲定位互動，了解船舶噪音污染如何對薩利甚海中瀕危虎鯨群造成日常生存威脅。</p>
+                            </div>
+                        </div>
+                        <div class="ow-work-card">
+                            <div class="ow-work-image"><img src="image/Mars.png" alt="Jupiter and Mars"></div>
+                            <div class="ow-work-info">
+                                <span class="ow-badge">解謎冒險遊戲</span>
+                                <h3>🐬 Jupiter and Mars</h3>
+                                <h4>沉眠未來的海底遺跡探索</h4>
+                                <p>在未來人類消失之後的海底世界，扮演名為「朱比特」的海豚與夥伴「瑪爾斯」在海洋生物協助下關閉造成汙染的工業設備，體驗聲光異世界。</p>
+                            </div>
+                        </div>
+                        <div class="ow-work-card">
+                            <div class="ow-work-image"><img src="image/outoftheblue.png" alt="Out Of The Blue"></div>
+                            <div class="ow-work-info">
+                                <span class="ow-badge">VR 短片電影</span>
+                                <h3>🤿 《Out Of The Blue》</h3>
+                                <h4>世代傳承的海洋重生希望</h4>
+                                <p>探索由 Cabo Pulmo 漁民社區小孩繼承的自然遺產。當面臨海洋資源枯竭時，他們自發成為保護主義者，見證了海洋公園令人驚嘆的重生歷程。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="info-detail-bird" class="info-detail-block border-none">
+                    <div class="sw-hero-header" style="background: radial-gradient(circle at center, rgba(6, 182, 212, 0.25) 0%, #141419 80%);">
+                        <h1>天之眼</h1>
+                        <p>衝破雲霄的守護之翼，從飛鷹與微觀複眼重新洞察世界。</p>
+                    </div>
+                    <div class="skyweb-mobile-content">
+                        <div class="sw-work-card">
+                            <div class="sw-work-image"><img src="image/inTheEyesofTheAnimals.png" alt="In the eyes of the animal"></div>
+                            <div class="sw-work-info">
+                                <span class="sw-badge">深度沉浸式 VR</span>
+                                <h3>🦅 In the eyes of the animal</h3>
+                                <h4>化身非人類物種的感官交響</h4>
+                                <p>使用者透過體驗 different 生物——蚊子、蜻蜓、青蛙，最終是貓頭鷹的視覺和感官視角，利用光達點雲網格探索這些生物如何感知環境並與之互動。</p>
+                            </div>
+                        </div>
+                        <div class="sw-work-card">
+                            <div class="sw-work-image"><img src="image/bee.png" alt="BEE"></div>
+                            <div class="sw-work-info">
+                                <span class="sw-badge">合作對戰遊戲</span>
+                                <h3>🐝 BEE</h3>
+                                <h4>微觀世界裡的蜂巢大冒險</h4>
+                                <p>體驗蜜蜂的生活！啟動紫外線光譜視覺，在洋溢著生命之樂的世界收集花粉、對抗黃蜂並拯救蜂巢，體驗微小生物的巨大生存韌性。</p>
+                            </div>
+                        </div>
+                        <div class="sw-work-card">
+                            <div class="sw-work-image"><img src="image/eagle.png" alt="Eagle"></div>
+                            <div class="sw-work-info">
+                                <span class="sw-badge">360° 真實視角</span>
+                                <h3>🦅 Eagle</h3>
+                                <h4>跟隨白尾海雕衝破冰川雲霄</h4>
+                                <p>透過固定在白尾海雕 Victor 背上的 360 度攝影鏡頭，化身天空霸主在壯闊群山間滑翔，見證氣候變遷下冰川消逝、露出裸露灰色岩石的震撼瞬間。</p>
+                            </div>
+                        </div>
+                        <div class="sw-work-card">
+                            <div class="sw-work-image"><img src="image/images.jpg" alt="擬鳥"></div>
+                            <div class="sw-work-info">
+                                <span class="sw-badge">VR 體感互動系統</span>
+                                <h3>🦅 擬鳥</h3>
+                                <h4>化身大冠鷲翱翔生態鳳凰谷</h4>
+                                <p>結合懸吊體感結構，張開雙手如同揮動翅膀。化身大冠鷲在現實與虛擬交錯中翱翔鳳凰谷，具象化候鳥面臨都市玻璃窗殺與空污霾害的高空生死避障。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="backToLobby()">返回展廳大廳</button>
+        </section>
+
+        <section id="step-2-section" class="flow-section">
+            <div class="interactive-panel">
+                <div class="nav-tabs" id="game-tabs-container">
+                    <button class="tab-btn active" data-target="fungi" id="tab-fungi">1. 🍄 菌絲網路</button>
+                    <button class="tab-btn" data-target="insect" id="tab-insect">2. 🪲 變形記微觀</button>
+                    <button class="tab-btn" data-target="cat" id="tab-cat">3. 🐱 石虎現場</button>
+                    <button class="tab-btn" data-target="bird" id="tab-bird">4. 🦅 森林探險</button>
+                    <button class="tab-btn" data-target="jelly" id="tab-jelly">1. 🪼 水母生存戰</button>
+                    <button class="tab-btn" data-target="dolphin" id="tab-dolphin">2. 🐬 聲納解密</button>
+                    <button class="tab-btn" data-target="fish" id="tab-fish">3. 🐟 魚群龍捲風</button>
+                    <button class="tab-btn" data-target="orca" id="tab-orca">4. 🐋 虎鯨噪音迷宮</button>
+                    <button class="tab-btn" data-target="dragonfly" id="tab-dragonfly">1. 👁 蜻蜓複眼</button>
+                    <button class="tab-btn" data-target="bee" id="tab-bee">2. 🐝 蜜蜂紫外線</button>
+                    <button class="tab-btn" data-target="eagle" id="tab-eagle">3. 🦅 冰川記憶線</button>
+                    <button class="tab-btn" data-target="projection" id="tab-projection">4. 🦜 擬鳥避障戰</button>
+                </div>
+
+                <div class="preview-area" id="canvasContainer">
+                    <div id="display-fungi" class="display-container active"><canvas id="fungiCanvas"></canvas><div class="hint-text">👆 輕觸畫面，傳輸地底化學訊號</div></div>
+                    <div id="display-insect" class="display-container"><div id="insectContainer"><div class="macro-world" id="macroWorld"><div class="floor-texture">--- HUMAN MONOLITH ---</div><p style="color: #666; font-size: 0.7rem; margin-bottom: 12px;">（對昆蟲而言，這行字如同高聳的大樓）</p><div class="bug-avatar" id="bugAvatar"></div></div></div></div>
+                    <div id="display-cat" class="display-container"><div id="catContainer" style="width:100%; height:100%; position:relative;"><div class="road"></div><div class="cat-pawn"></div><div class="headlights" id="lights"></div><div class="alert-overlay" id="alertOverlay">⚠ 警告：砂石車逼近 ⚠</div></div></div>
+                    <div id="display-bird" class="display-container"><div style="width:100%; height:100%; position:relative;"><div class="panorama-view" id="panoView"><div class="panorama-title">🦅 猛禽視角：蓼科森林俯瞰</div></div><div class="hint-text">👈 左右單指滑動環顧森林樹冠 👉</div></div></div>
+                    <div id="display-jelly" class="display-container"><canvas id="jellyCanvas"></canvas><div class="hint-text">拖曳或滑動畫面引導水母，避開白色微塑膠隕石</div></div>
+                    <div id="display-dolphin" class="display-container"><canvas id="dolphinCanvas"></canvas><div class="hint-text">👆 輕觸畫面任意處發射深海聲納探測網格</div></div>
+                    <div id="display-fish" class="display-container"><canvas id="fishCanvas"></canvas><div class="hint-text">🌀 用手指在畫布上快速繞圈帶動魚群龍捲風</div></div>
+                    <div id="display-orca" class="display-container"><canvas id="orcaCanvas"></canvas><div class="hint-text">拖曳避開上方灰色輪船噪音波，游向金色寶寶</div></div>
+                    <div id="display-dragonfly" class="display-container"><canvas id="dragonflyCanvas"></canvas><div class="hint-text">滑動手指用六角複眼網格矩陣鎖定並捕捉飛行的蚊蟲</div></div>
+                    <div id="display-bee" class="display-container"><canvas id="beeCanvas"></canvas><div class="hint-text">👇 在畫布上按住不放以解鎖紫外線導航，採集花粉能量</div></div>
+                    <div id="display-eagle" class="display-container"><canvas id="eagleCanvas"></canvas><div class="hint-text">海雕視線：請滑動調整下方專屬「年代滑桿」觀察冰川消融</div></div>
+                    <div id="display-projection" class="display-container"><canvas id="projectionCanvas"></canvas><div class="hint-text">🦜 點擊左半螢幕往左移、右半螢幕往右移。閃避玻璃大樓與空污</div></div>
+                </div>
+
+                <div class="project-info">
+                    <div id="info-fungi" class="project-content active">
+                        <h2 class="project-title" style="color: var(--accent-fungi);">Fungi: The Web of Life</h2>
+                        <p class="project-desc">模擬【地之脈】地表下交織的菌絲網絡。在黑土地上單指輕觸，可發送化學訊號，感受微觀生命網絡的擴散速度。</p>
+                        <div class="control-group"><label for="nodeDensity">網絡生長複雜度</label><input type="range" id="nodeDensity" min="3" max="10" value="5"></div>
+                    </div>
+                    <div id="info-insect" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-insect);">Metamorphosis VR</h2>
+                        <p class="project-desc">取材自卡夫卡小說。將玩家視野降至極限。拉動滑桿調整放大率，模擬變成昆蟲時，人類物件化為巨石的壓迫感。</p>
+                        <div class="control-group"><label for="humanScale">人類世界放大倍率</label><input type="range" id="humanScale" min="1" max="6" value="1"></div>
+                    </div>
+                    <div id="info-cat" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-cat);">【地之脈】現場三：陸地現場警示</h2>
+                        <p class="project-desc">親臨野生棲地邊緣。調整下方車速強度，當強光砂石車高速逼近時，畫面將劇烈閃爍，模擬物種與人類邊界碰撞的緊迫危機。</p>
+                        <div class="control-group"><label for="trafficSpeed">砂石車車速 (環境危險度)</label><input type="range" id="trafficSpeed" min="1" max="3" value="1"></div>
+                    </div>
+                    <div id="info-bird" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-bird);">【地之脈】現場四：森林環境探險</h2>
+                        <p class="project-desc">化身鳥類或樹冠層生物。在上方畫面單指觸控左右滑動可環顧樹冠全景照片，下方可調控模擬高空粒子風速。</p>
+                        <div class="control-group"><label for="windIntensity">樹冠高空環境風速</label><input type="range" id="windIntensity" min="0" max="100" value="30"></div>
+                    </div>
+                    <div id="info-jelly" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-jelly);">Drop in the Ocean</h2>
+                        <p class="project-desc">縮小成2公分大，觸控引導水母。吸收綠色「浮游生物」來維持能量，全力躲避人造「微塑膠隕石」。</p>
+                        <div class="score-board"><div class="score-row"><span>水母核心發光度:</span><span id="jellyScore" style="color: var(--accent-jelly); font-weight:bold;">100%</span></div></div>
+                    </div>
+                    <div id="info-dolphin" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-dolphin);">Jupiter & Mars</h2>
+                        <p class="project-desc">末日淹沒城市。四周一片漆黑，輕觸畫布發射環形聲納，讓撞擊到的骨架、珊瑚與廢棄垃圾顯形。</p>
+                        <div class="score-board"><div class="score-row"><span>已探測結構數:</span><span id="dolphinScore" style="color: var(--accent-dolphin); font-weight:bold;">0 / 5</span></div></div>
+                    </div>
+                    <div id="info-fish" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-fish);">Out of the Blue</h2>
+                        <p class="project-desc">反思海洋禁捕復育成果。在畫布上快速繞圓滑動建立強大保護區洋流，能吸引成千上萬的鱗光小魚粒子跟隨聚集。</p>
+                        <div class="score-board"><div class="score-row"><span>保護區魚群數量:</span><span id="fishScore" style="color: var(--accent-fish); font-weight:bold;">150 條</span></div></div>
+                    </div>
+                    <div id="info-orca" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-orca);">Critical Distance</h2>
+                        <p class="project-desc">扮演母虎鯨游向寶寶。上方巨大商船會散發灰色「雜音聲波漣漪」，一旦踩入，視野會產生嚴重模糊灰階遮罩。</p>
+                        <div class="score-board"><div class="score-row"><span>噪音干擾強度:</span><span id="orcaScore" style="color: var(--accent-orca); font-weight:bold;">安全</span></div></div>
+                    </div>
+                    <div id="info-dragonfly" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-dragonfly);">In the Eyes of the Animal</h2>
+                        <p class="project-desc">觸控移動引導蜻蜓 300 度的蜂巢六角廣角複眼。由於對動態極其敏感，必須快速移動複眼網格鎖定畫面上高速飛逝的獵物。</p>
+                        <div class="score-board"><div class="score-row"><span>複眼鎖定獵物數:</span><span id="dragonflyScore" style="color: var(--accent-dragonfly); font-weight:bold;">0 隻</span></div></div>
+                    </div>
+                    <div id="info-bee" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-bee);">Bee Simulator</h2>
+                        <p class="project-desc">模擬工蜂授粉面臨的農藥與環境威脅。平時花朵暗淡，【在畫布上按住不放】能啟動紫外線視覺，看見核心隱藏的花蜜導航線。</p>
+                        <div class="score-board"><div class="score-row"><span>採集花粉能量:</span><span id="beeScore" style="color: var(--accent-bee)； font-weight:bold;">0%</span></div></div>
+                    </div>
+                    <div id="info-eagle" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-eagle);">海雕維克多的冰川視線</h2>
+                        <p class="project-desc">跟隨 white-tailed eagle 鳥瞰阿爾卑斯山頂。調整下方的「年代滑桿」，親眼審視溫室效應下，壯麗白色冰川退縮消融為裸露灰色岩石的過程。</p>
+                        <div class="control-group">
+                            <label for="yearSlider">觀察年份：<span id="yearLabel" style="color:var(--accent-eagle); font-weight:bold;">2000 年</span></label>
+                            <input type="range" id="yearSlider" min="2000" max="2026" value="2000">
+                        </div>
+                    </div>
+                    <div id="info-projection" class="project-content">
+                        <h2 class="project-title" style="color: var(--accent-projection);">科博館虛實懸吊特展：《擬鳥》</h2>
+                        <p class="project-desc">化身遷徙候鳥。手機端操作：【點擊畫布左側向左擺動、點擊右側向右擺動】。在高空強風急流中閃避高壓電網與反光玻璃大樓窗殺結局。</p>
+                        <div class="score-board">
+                            <div class="score-row"><span>當前飛行時速:</span><span id="birdSpeedLabel" style="color: #38bdf8; font-weight:bold;">40 km/h</span></div>
+                            <div class="score-row"><span>安全翱翔里程:</span><span id="birdDistanceLabel" style="color: #34d399; font-weight:bold;">0 m</span></div>
+                            <div class="score-row"><span>鳥體生命跡象:</span><span id="projectionScore" style="color: var(--accent-projection); font-weight:bold;">安全翱翔中</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="flowActionBtn" onclick="goToStep3()">完成感官對齊，進行出任務安全核對</button>
+        </section>
+
+        <section id="step-3-section" class="flow-section">
+            <div class="text-center mb-4">
+                <h2 style="font-size: 1.2rem; margin-bottom: 3px; font-weight: bold;">✅ 安全裝備與環境核對</h2>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">為了給您最完美的虛實整合體驗，請知悉：</p>
+            </div>
+            <ul class="checklist">
+                <li><span style="font-size: 1.1rem;">🥽</span><div><strong style="color: var(--neon-green);">高規格衛生防護</strong><br>我們每場體驗後皆採用專業 UVC 消毒機。現場將為您發放全新「一次性防汗眼罩」，敬請安心戴上。</div></li>
+                <li><span style="font-size: 1.1rem;">🛡️</span><div><strong style="color: var(--neon-green);">虛擬安全圍欄護航</strong><br>展位設有防撞感應圍欄 (Guardian System)，且全程將由專屬「天使導覽員」進行安全空間引導。</div></li>
+                <li><span style="font-size: 1.1rem;">💦</span><div><strong style="color: var(--neon-green);">五感真實整合提示</strong><br>如果您選擇的是【水之息】展區，此區設立於科博館植物園的真實熱帶雨林水池旁。體驗時您耳邊會聽到真實潺潺水聲、呼吸潮濕的水氣，達成虛實整合的最高境界！</div></li>
+            </ul>
+            <div class="pass-badge">
+                <span style="font-size: 0.7rem; color: var(--text-muted); letter-spacing: 1px;">Ready for XR</span>
+                <h3 style="margin: 3px 0; color: var(--neon-green); font-size: 1.1rem;">已完成對齊</h3>
+                <span id="badge-species" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-top: 4px;">生態感官就緒</span>
+            </div>
+            <div class="info-box" style="border-color: var(--electric-purple); background: rgba(138,43,226,0.05); margin-bottom: 0;">
+                <strong>🎁 展後專屬彩蛋預告：</strong><br>體驗結束後，憑網頁此畫面至紀念品店，可優先選購印有隱藏花紋的「UV感光變色帆布袋」！
+            </div>
+            <button class="btn" style="border-color: var(--text-muted); color: var(--text-muted);" onclick="resetFlow()">重新載入身分卡</button>
+        </section>
+
+        <footer>
+            © 2026 生態共感 XR 策展團隊<br>國立自然科學博物館 雙向互惠特展
+        </footer>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let currentExhibition = 'fungi';
+        let currentTab = 'fungi';
+
+        // 行動端座標追蹤
+        let mouse = { x: 200, y: 150 };
+        let isTouchActive = false; 
+        const canvasContainer = document.getElementById('canvasContainer');
+        
+        function updateCoordinates(e) {
+            const rect = canvasContainer.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            mouse.x = clientX - rect.left;
+            mouse.y = clientY - rect.top;
+        }
+        canvasContainer.addEventListener('mousemove', updateCoordinates);
+        canvasContainer.addEventListener('touchmove', updateCoordinates, { passive: true });
+        
+        canvasContainer.addEventListener('touchstart', (e) => {
+            isTouchActive = true;
+            updateCoordinates(e);
+            if (currentTab === 'dolphin' && !dolphinData.active) {
+                dolphinData.originX = mouse.x; dolphinData.originY = mouse.y;
+                dolphinData.pulseRadius = 0; dolphinData.active = true;
+            }
+            if (currentTab === 'projection' && birdData.alive) {
+                const rect = canvasContainer.getBoundingClientRect();
+                if (mouse.x < rect.width / 2) { birdKeys.left = true; birdKeys.right = false; } 
+                else { birdKeys.right = true; birdKeys.left = false; }
+            }
+        }, { passive: true });
+
+        canvasContainer.addEventListener('touchend', () => {
+            isTouchActive = false;
+            if (currentTab === 'projection') { birdKeys.left = false; birdKeys.right = false; }
+        });
+
+        // 觸發展開藝術家介紹分頁
+        function openArtistPage() {
+            hideAllSections();
+            document.getElementById('artist-page-section').classList.add('active');
+            document.getElementById('main-header').style.display = 'none'; 
+            document.getElementById('main-progress').style.display = 'none';
+            window.scrollTo(0,0);
+        }
+
+        // 控制 artist 頁籤的三大展區切換
+        function switchArtistZone(zoneKey) {
+            document.querySelectorAll('.artist-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`.artist-tab-btn[data-zone="${zoneKey}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            document.querySelectorAll('.artist-sub-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(`artist-panel-${zoneKey}`).classList.add('active');
+        }
+
+        // 返回主頁分流選單
+        function backToStep1() {
+            hideAllSections();
+            document.getElementById('step-1-section').classList.add('active');
+            document.getElementById('main-header').style.display = 'block';
+            document.getElementById('main-progress').style.display = 'flex';
+        }
+
+        function hideAllSections() {
+            document.querySelectorAll('.flow-section').forEach(s => s.classList.remove('active'));
+        }
+
+        // 原有的數位展廳切換邏輯
+        function select展廳(targetKey) {
+            currentExhibition = targetKey;
+            hideAllSections();
+            document.getElementById('step-1-5-section').classList.add('active');
+            document.getElementById('dot-1').className = "step-dot completed";
+            document.getElementById('dot-1-5').className = "step-dot active";
+
+            const lobbyTitle = document.getElementById('lobby-title');
+            let activeColor = '#39ff14';
+            if (targetKey === 'fungi') {
+                lobbyTitle.innerText = "【地之脈】微觀大地位 大廳";
+                activeColor = '#00ffcc';
+            } else if (targetKey === 'cat') {
+                lobbyTitle.innerText = "【水之息】沉浸水域位 大廳";
+                activeColor = '#38bdf8';
+            } else if (targetKey === 'bird') {
+                lobbyTitle.innerText = "【天之眼】空中生態位 大廳";
+                activeColor = '#a855f7';
+            }
+            document.documentElement.style.setProperty('--active-color', activeColor);
+        }
+
+        function goToInfo() {
+            hideAllSections();
+            document.getElementById('info-section').classList.add('active');
+            document.querySelectorAll('.info-detail-block').forEach(b => b.classList.remove('active'));
+            if(currentExhibition === 'fungi') document.getElementById('info-detail-fungi').classList.add('active');
+            if(currentExhibition === 'cat') document.getElementById('info-detail-cat').classList.add('active');
+            if(currentExhibition === 'bird') document.getElementById('info-detail-bird').classList.add('active');
+        }
+
+        function backToLobby() {
+            hideAllSections();
+            document.getElementById('step-1-5-section').classList.add('active');
+        }
+
+        function goToGames() {
+            hideAllSections();
+            document.getElementById('step-2-section').classList.add('active');
+            document.getElementById('dot-1-5').className = "step-dot completed";
+            document.getElementById('dot-2').className = "step-dot active";
+
+            document.querySelectorAll('.tab-btn').forEach(el => el.style.display = 'none');
+            resizeAllCanvases();
+
+            if (currentExhibition === 'fungi') {
+                ['fungi', 'insect', 'cat', 'bird'].forEach(id => document.getElementById(`tab-${id}`).style.display = 'inline-block');
+                document.getElementById('tab-fungi').click(); 
+            } else if (currentExhibition === 'cat') {
+                ['jelly', 'dolphin', 'fish', 'orca'].forEach(id => document.getElementById(`tab-${id}`).style.display = 'inline-block');
+                document.getElementById('tab-jelly').click();
+            } else if (currentExhibition === 'bird') {
+                ['dragonfly', 'bee', 'eagle', 'projection'].forEach(id => document.getElementById(`tab-${id}`).style.display = 'inline-block');
+                document.getElementById('tab-dragonfly').click();
+            }
+        }
+
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                currentTab = tab.dataset.target;
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.project-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`info-${currentTab}`).classList.add('active');
+
+                document.querySelectorAll('.display-container').forEach(d => d.classList.remove('active'));
+                document.getElementById(`display-${currentTab}`).classList.add('active');
+
+                if(currentTab === 'fungi') initFungi();
+                if(currentTab === 'cat') toggleCatAlert();
+                if(currentTab === 'bird') initBirdWind();
+                if(currentTab === 'jelly') initJelly();
+                if(currentTab === 'dolphin') initDolphin();
+                if(currentTab === 'fish') initFish();
+                if(currentTab === 'orca') initOrca();
+                if(currentTab === 'dragonfly') initDragonfly();
+                if(currentTab === 'bee') initBee();
+                if(currentTab === 'projection') initProjection();
+            });
+        });
+
+        function goToStep3() {
+            document.getElementById('dot-2').className = "step-dot completed";
+            document.getElementById('dot-3').className = "step-dot active";
+            document.getElementById('step-2-section').classList.remove('active');
+            document.getElementById('step-3-section').classList.add('active');
+        }
+
+        function resetFlow() {
+            document.getElementById('dot-1').className = "step-dot active";
+            ['dot-1-5', 'dot-2', 'dot-3'].forEach(id => document.getElementById(id).className = "step-dot");
+            document.getElementById('step-3-section').classList.remove('active');
+            document.getElementById('step-1-section').classList.add('active');
+        }
+
+        const canvasKeys = ['fungiCanvas', 'jellyCanvas', 'dolphinCanvas', 'fishCanvas', 'orcaCanvas', 'dragonflyCanvas', 'beeCanvas', 'eagleCanvas', 'projectionCanvas'];
+        function resizeAllCanvases() {
+            const w = canvasContainer.clientWidth || 360;
+            const h = canvasContainer.clientHeight || 300;
+            canvasKeys.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { el.width = w; el.height = h; }
+            });
+        }
+
+        // --------------------------------------------------
+        // ★ 移植自 tea.html 的專屬 JavaScript 邏輯
+        // --------------------------------------------------
+        function toggleTeaViewMode() {
+            document.body.classList.toggle('compound-eye-active');
+            const btn = document.querySelector('.view-toggle-btn');
+            if(document.body.classList.contains('compound-eye-active')) {
+                btn.innerHTML = "✨ 返回人類視角";
+            } else {
+                btn.innerHTML = "👁️ 切換複眼視角";
+            }
+        }
+
+        function switchTeaAcademicTab(event, tabId) {
+            const contents = document.querySelectorAll('.tea-tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.tea-tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- 1. 地之脈小遊戲模組 ---
+        let nodes = []; let pulses = [];
+        const canvasF = document.getElementById('fungiCanvas');
+        function initFungi() {
+            nodes = []; pulses = [];
+            const count = document.getElementById('nodeDensity').value * 5;
+            for(let i=0; i<count; i++) nodes.push({ x: Math.random() * canvasF.width, y: Math.random() * canvasF.height, radius: Math.random() * 2 + 1 });
+        }
+        document.getElementById('nodeDensity').addEventListener('input', initFungi);
+        canvasF.addEventListener('click', (e) => {
+            const rect = canvasF.getBoundingClientRect();
+            pulses.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, r: 0, maxR: 130, speed: 4 });
+        });
+
+        // 變形記
+        document.getElementById('humanScale').addEventListener('input', (e) => {
+            document.getElementById('macroWorld').style.transform = `scale(${1 + (e.target.value - 1) * 0.25})`;
+            document.getElementById('bugAvatar').style.transform = `scale(${1 / (1 + (e.target.value - 1) * 0.12)})`;
+        });
+
+        // 石虎路殺
+        let alertInterval;
+        function toggleCatAlert() {
+            clearInterval(alertInterval); if(currentTab !== 'cat') return;
+            let step = 0;
+            alertInterval = setInterval(() => {
+                const speed = document.getElementById('trafficSpeed').value; step++;
+                let posX = 400 - (step % 25) * (speed * 9);
+                document.getElementById('lights').style.right = posX + 'px';
+                if(posX < 70 && posX > -30) {
+                    document.getElementById('alertOverlay').style.opacity = (step % 2 === 0) ? 1 : 0;
+                    document.getElementById('catContainer').style.background = (step % 2 === 0) ? '#300' : '#020205';
+                } else {
+                    document.getElementById('alertOverlay').style.opacity = 0; document.getElementById('catContainer').style.background = '#020205';
+                }
+            }, 60);
+        }
+        document.getElementById('trafficSpeed').addEventListener('input', toggleCatAlert);
+
+        // 樹冠層全景滑動與風粒子
+        let isDragging = false; let startX, backgroundPos = 0; let windInterval;
+        const panoView = document.getElementById('panoView');
+        panoView.addEventListener('touchstart', (e) => { isDragging = true; startX = e.touches[0].clientX; }, {passive: true});
+        window.addEventListener('touchend', () => isDragging = false);
+        panoView.addEventListener('touchmove', (e) => {
+            if(!isDragging) return;
+            const x = e.touches[0].clientX; backgroundPos += (x - startX) * 0.85;
+            panoView.style.backgroundPosition = `${backgroundPos}px center`; startX = x;
+        }, {passive: true});
+
+        function initBirdWind() {
+            document.querySelectorAll('.wind-particle').forEach(p => p.remove());
+            clearInterval(windInterval); if(currentTab !== 'bird') return;
+            windInterval = setInterval(() => {
+                const intensity = document.getElementById('windIntensity').value; if(intensity == 0) return;
+                if(Math.random() * 100 < intensity) {
+                    const p = document.createElement('div'); p.classList.add('wind-particle');
+                    p.style.top = Math.random() * panoView.clientHeight + 'px'; p.style.left = '-50px';
+                    p.style.width = (15 + intensity * 0.6) + 'px'; panoView.appendChild(p);
+                    let currentLeft = -50;
+                    const moveId = setInterval(() => {
+                        currentLeft += 4 + (intensity / 12); p.style.left = currentLeft + 'px';
+                        if(currentLeft > panoView.clientWidth) { clearInterval(moveId); p.remove(); }
+                    }, 16);
+                }
+            }, 120);
+        }
+        document.getElementById('windIntensity').addEventListener('input', initBirdWind);
+
+        // --- 2. 水之息小遊戲模組 ---
+        let jellyData = { hp: 100, x: 180, y: 150, particles: [] };
+        function initJelly() {
+            jellyData.hp = 100; jellyData.particles = []; const cvs = document.getElementById('jellyCanvas');
+            for(let i=0; i<12; i++) {
+                jellyData.particles.push(createJellyItem(true, cvs.width));
+                if(i < 4) jellyData.particles.push(createJellyItem(false, cvs.width));
+            }
+        }
+        function createJellyItem(isPlastic, maxW) {
+            return { x: Math.random() * (maxW || 360), y: -20 - Math.random() * 200, r: isPlastic ? Math.random() * 12 + 8 : 5, speed: isPlastic ? Math.random() * 2.5 + 1.5 : Math.random() * 1.2 + 0.8, isPlastic: isPlastic };
+        }
+
+        let dolphinData = { pulseRadius: 0, maxRadius: 320, active: false, targets: [], scannedCount: 0, originX: 180, originY: 150 };
+        function initDolphin() {
+            dolphinData.targets = [
+                {x: 60, y: 50, r: 25, name: "受困海龜", alpha: 0, found: false},
+                {x: 270, y: 70, r: 35, name: "巨型沉船結構", alpha: 0, found: false},
+                {x: 130, y: 200, r: 25, name: "廢棄漁網堆", alpha: 0, found: false},
+                {x: 290, y: 220, r: 30, name: "白化珊瑚礁", alpha: 0, found: false},
+                {x: 60, y: 240, r: 20, name: "深海垃圾帶", alpha: 0, found: false}
+            ];
+            dolphinData.scannedCount = 0; dolphinData.active = false;
+        }
+
+        let fishData = { list: [], lastMouseX: 0, lastMouseY: 0, vortexForce: 0 };
+        function initFish() {
+            fishData.list = []; const cvs = document.getElementById('fishCanvas');
+            for(let i=0; i<110; i++) fishData.list.push({ x: Math.random() * cvs.width, y: Math.random() * cvs.height, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, size: Math.random() * 2.5 + 1.5 });
+        }
+
+        let orcaData = { baby: {x:180, y:240}, pulse: 0, ships: [] };
+        function initOrca() {
+            const cvs = document.getElementById('orcaCanvas');
+            orcaData.baby = { x: cvs.width / 2 || 180, y: cvs.height - 50 || 250 }; orcaData.pulse = 0;
+            orcaData.ships = [{x: 50, y: 60, r: 80, targetR: 100, dir: 1, speed: 1.3}, {x: 280, y: 140, r: 90, targetR: 110, dir: -1, speed: 1.7}];
+        }
+
+        // --- 3. 天之眼小遊戲模組 ---
+        let dragonflyData = { score: 0, targets: [] };
+        function initDragonfly() {
+            dragonflyData.targets = []; const cvs = document.getElementById('dragonflyCanvas');
+            for(let i=0; i<3; i++) dragonflyData.targets.push(createMosquito(cvs.height));
+        }
+        function createMosquito(maxH) { return { x: -20, y: Math.random() * (maxH || 260), vx: Math.random() * 3 + 3, vy: (Math.random() - 0.5) * 3, r: 4.5 }; }
+        function drawHexagon(ctx, x, y, size) {
+            ctx.beginPath(); for (let i = 0; i < 6; i++) ctx.lineTo(x + size * Math.cos(i * Math.PI / 3), y + size * Math.sin(i * Math.PI / 3));
+            ctx.closePath(); ctx.stroke();
+        }
+
+        let beeData = { score: 0, flowers: [] };
+        function initBee() {
+            beeData.score = 0; const cvs = document.getElementById('beeCanvas');
+            const w = cvs.width || 360; const h = cvs.height || 260;
+            beeData.flowers = [{x: w * 0.25, y: h * 0.3, r: 45}, {x: w * 0.75, y: h * 0.4, r: 55}, {x: w * 0.5, y: h * 0.75, r: 50}];
+        }
+
+        document.getElementById('yearSlider').addEventListener('input', (e) => { document.getElementById('yearLabel').innerText = e.target.value + " 年"; });
+        function initEagle() {}
+        function blendColor(color1, color2, ratio) {
+            const r1 = parseInt(color1.substring(1,3), 16), g1 = parseInt(color1.substring(3,5), 16), b1 = parseInt(color1.substring(5,7), 16);
+            const r2 = parseInt(color2.substring(1,3), 16), g2 = parseInt(color2.substring(3,5), 16), b2 = parseInt(color2.substring(5,7), 16);
+            return `#${Math.round(r1 + (r2 - r1) * ratio).toString(16).padStart(2,'0')}${Math.round(g1 + (g2 - g1) * ratio).toString(16).padStart(2,'0')}${Math.round(b1 + (b2 - b1) * ratio).toString(16).padStart(2,'0')}`;
+        }
+
+        let birdData = { x: 180, y: 220, vx: 0, r: 12, alive: true, mileage: 0, obstacles: [], winds: [], pm25Opacity: 0 };
+        let birdKeys = { left: false, right: false }; let obstacleTimer = 0;
+        function initProjection() {
+            const cvs = document.getElementById('projectionCanvas');
+            birdData = { x: cvs.width/2 || 180, y: cvs.height - 80 || 220, vx: 0, r: 12, alive: true, mileage: 0, obstacles: [], winds: [], pm25Opacity: 0 };
+            obstacleTimer = 0; birdKeys.left = false; birdKeys.right = false;
+        }
+        function spawnBirdObstacle(maxW) {
+            const types = ['building', 'pylon', 'smog']; const type = types[Math.floor(Math.random() * types.length)];
+            birdData.obstacles.push({ x: Math.random() * (maxW - 80) + 40, y: -80, w: type === 'smog' ? 110 : (type === 'building' ? 65 : 35), h: type === 'smog' ? 80 : (type === 'building' ? 120 : 90), type: type, speed: Math.random() * 2 + 3.5 });
+        }
+
+        // ==========================================
+        // 動畫繪圖主迴圈 (Main Animation Loop)
+        // ==========================================
+        function mainGameLoop() {
+            if (document.getElementById('step-2-section').classList.contains('active')) {
+                // 1. 地之脈：真菌網路
+                if (currentTab === 'fungi') {
+                    const ctx = canvasF.getContext('2d'); ctx.clearRect(0, 0, canvasF.width, canvasF.height);
+                    ctx.strokeStyle = '#142220'; ctx.lineWidth = 1;
+                    for(let i=0; i<nodes.length; i++) {
+                        for(let j=i+1; j<nodes.length; j++) {
+                            let dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                            if(dist < 70) { ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke(); }
+                        }
+                    }
+                    pulses.forEach((p, index) => {
+                        p.r += p.speed; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(0, 255, 204, ${1 - p.r/p.maxR})`; ctx.lineWidth = 2; ctx.stroke();
+                        nodes.forEach(n => {
+                            let d = Math.hypot(n.x - p.x, n.y - p.y);
+                            if(Math.abs(d - p.r) < 6) { ctx.beginPath(); ctx.arc(n.x, n.y, n.radius * 2.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); }
+                        });
+                        if(p.r >= p.maxR) pulses.splice(index, 1);
+                    });
+                    nodes.forEach(n => { ctx.beginPath(); ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2); ctx.fillStyle = '#00aa88'; ctx.fill(); });
+                }
+
+                // 2. 水之息：水母生存
+                if (currentTab === 'jelly') {
+                    const cvs = document.getElementById('jellyCanvas'); const ctx = cvs.getContext('2d'); ctx.clearRect(0,0,cvs.width,cvs.height);
+                    jellyData.x += (mouse.x - jellyData.x) * 0.1; jellyData.y += (mouse.y - jellyData.y) * 0.1;
+                    let grad = ctx.createRadialGradient(jellyData.x, jellyData.y, 2, jellyData.x, jellyData.y, 18);
+                    grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, `rgba(56, 189, 248, ${jellyData.hp/100})`); grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(jellyData.x, jellyData.y, 18, 0, Math.PI*2); ctx.fill();
+                    jellyData.particles.forEach((p, i) => {
+                        p.y += p.speed; if(p.y > cvs.height + 15) { jellyData.particles[i] = createJellyItem(p.isPlastic, cvs.width); return; }
+                        let dist = Math.hypot(jellyData.x - p.x, jellyData.y - p.y);
+                        if(dist < p.r + 15) {
+                            if(p.isPlastic) { jellyData.hp = Math.max(0, jellyData.hp - 12); ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(0,0,cvs.width,cvs.height); } 
+                            else { jellyData.hp = Math.min(100, jellyData.hp + 10); }
+                            jellyData.particles[i] = createJellyItem(p.isPlastic, cvs.width);
+                        }
+                        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = p.isPlastic ? 'rgba(255, 255, 255, 0.65)' : '#34d399'; ctx.fill();
+                    });
+                    document.getElementById('jellyScore').innerText = Math.round(jellyData.hp) + '%';
+                }
+
+                // 3. 水之息：聲納探測
+                if (currentTab === 'dolphin') {
+                    const cvs = document.getElementById('dolphinCanvas'); const ctx = cvs.getContext('2d'); ctx.clearRect(0,0,cvs.width,cvs.height);
+                    ctx.fillStyle = '#818cf8'; ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 5, 0, Math.PI*2); ctx.fill();
+                    if(dolphinData.active) {
+                        dolphinData.pulseRadius += 4.5; ctx.strokeStyle = `rgba(129, 140, 248, ${1 - dolphinData.pulseRadius/dolphinData.maxRadius})`;
+                        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(dolphinData.originX, dolphinData.originY, dolphinData.pulseRadius, 0, Math.PI*2); ctx.stroke();
+                        if(dolphinData.pulseRadius >= dolphinData.maxRadius) dolphinData.active = false;
+                    }
+                    dolphinData.scannedCount = 0;
+                    dolphinData.targets.forEach(t => {
+                        if(dolphinData.active) {
+                            let d = Math.hypot(dolphinData.originX - t.x, dolphinData.originY - t.y);
+                            if(Math.abs(d - dolphinData.pulseRadius) < 15) { t.alpha = 1.0; t.found = true; }
+                        }
+                        t.alpha = Math.max(0, t.alpha - 0.005); if(t.found) dolphinData.scannedCount++;
+                        if(t.alpha > 0) {
+                            ctx.strokeStyle = `rgba(129, 140, 248, ${t.alpha})`; ctx.strokeRect(t.x - t.r, t.y - t.r, t.r*2, t.r*2);
+                            ctx.fillStyle = `rgba(255,255,255, ${t.alpha})`; ctx.font = '9px sans-serif'; ctx.fillText(t.name, t.x - t.r, t.y - t.r - 4);
+                        }
+                    });
+                    document.getElementById('dolphinScore').innerText = `${dolphinData.scannedCount} / ${dolphinData.targets.length}`;
+                }
+
+                // 4. 水之息：魚群洋流
+                if (currentTab === 'fish') {
+                    const cvs = document.getElementById('fishCanvas'); const ctx = cvs.getContext('2d'); ctx.clearRect(0,0,cvs.width,cvs.height);
+                    let speed = Math.hypot(mouse.x - fishData.lastMouseX, mouse.y - fishData.lastMouseY);
+                    fishData.vortexForce = speed > 2.5 ? Math.min(7, fishData.vortexForce + 0.15) : Math.max(0.4, fishData.vortexForce - 0.07);
+                    fishData.lastMouseX = mouse.x; fishData.lastMouseY = mouse.y;
+                    ctx.strokeStyle = `rgba(52, 211, 153, ${fishData.vortexForce/14})`; ctx.lineWidth = 1.2;
+                    ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 20 + fishData.vortexForce*2, 0, Math.PI*2); ctx.stroke();
+                    fishData.list.forEach(f => {
+                        let dx = mouse.x - f.x, dy = mouse.y - f.y, dist = Math.hypot(dx, dy);
+                        if(dist < 180) {
+                            f.vx += (dx / dist) * 0.1; f.vy += (dy / dist) * 0.1;
+                            if(fishData.vortexForce > 1.2) { f.vx += (-dy / dist) * (fishData.vortexForce * 0.1); f.vy += (dx / dist) * (fishData.vortexForce * 0.1); }
+                        }
+                        f.vx *= 0.94; f.vy *= 0.94; f.x += f.vx; f.y += f.vy;
+                        ctx.fillStyle = `rgba(52, 211, 153, 0.75)`; ctx.beginPath(); ctx.arc(f.x, f.y, f.size, 0, Math.PI*2); ctx.fill();
+                    });
+                    document.getElementById('fishScore').innerText = fishData.list.length + " 條";
+                }
+
+                // 5. 水之息：虎鯨噪音迷宮
+                if (currentTab === 'orca') {
+                    const cvs = document.getElementById('orcaCanvas'); const ctx = cvs.getContext('2d'); ctx.clearRect(0,0,cvs.width,cvs.height);
+                    let inNoiseZone = false, maxIntensity = 0;
+                    orcaData.ships.forEach(s => {
+                        s.x += s.speed * s.dir; if(s.x > cvs.width + 40 && s.dir === 1) s.x = -40; if(s.x < -40 && s.dir === -1) s.x = cvs.width + 40;
+                        s.r += 0.35; if(s.r > s.targetR) s.r = s.targetR - 25;
+                        let d = Math.hypot(mouse.x - s.x, mouse.y - s.y);
+                        if(d < s.targetR) { inNoiseZone = true; let intensity = (1 - d/s.targetR); if(intensity > maxIntensity) maxIntensity = intensity; }
+                        ctx.fillStyle = '#475569'; ctx.fillRect(s.x - 18, s.y - 6, 36, 10);
+                        ctx.strokeStyle = `rgba(148, 163, 184, ${0.12 * (1 - s.r/s.targetR)})`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); 
+                        ctx.stroke();
+                    });
+                    orcaData.pulse += 1.2; if(orcaData.pulse > 70) orcaData.pulse = 0;
+                    ctx.strokeStyle = `rgba(253, 224, 71, ${1 - orcaData.pulse/70})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(orcaData.baby.x, orcaData.baby.y, orcaData.pulse, 0, Math.PI*2); ctx.stroke();
+                    ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(orcaData.baby.x, orcaData.baby.y, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 7, 0, Math.PI*2); ctx.fill();
+                    if(inNoiseZone) {
+                        ctx.fillStyle = `rgba(15, 23, 42, ${maxIntensity * 0.78})`; ctx.fillRect(0,0,cvs.width,cvs.height);
+                        document.getElementById('orcaScore').innerText = `嚴重干擾 (${Math.round(maxIntensity*100)}%)`; document.getElementById('orcaScore').style.color = 'var(--accent-orca)';
+                    } else {
+                        document.getElementById('orcaScore').innerText = `安全`; document.getElementById('orcaScore').style.color = '#34d399';
+                    }
+                }
+
+                // 6. 天之眼：蜻蜓複眼廣角
+                if (currentTab === 'dragonfly') {
+                    const cvs = document.getElementById('dragonflyCanvas'); const ctx = cvs.getContext('2d'); const w = cvs.width; const h = cvs.height;
+                    ctx.fillStyle = '#064e3b'; ctx.fillRect(0,0,w,h);
+                    dragonflyData.targets.forEach((m, idx) => {
+                        m.x += m.vx; m.y += m.vy; if(m.x > w + 20) dragonflyData.targets[idx] = createMosquito(h);
+                        let d = Math.hypot(mouse.x - m.x, mouse.y - m.y);
+                        if(d < 45) { dragonflyData.score++; dragonflyData.targets[idx] = createMosquito(h); }
+                        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI*2); ctx.fill();
+                    });
+                    ctx.strokeStyle = 'rgba(168, 85, 247, 0.25)'; ctx.lineWidth = 1; let hexSize = 10;
+                    for(let x = mouse.x - 80; x < mouse.x + 80; x += hexSize * 1.73) {
+                        for(let y = mouse.y - 80; y < mouse.y + 80; y += hexSize * 2) { if(Math.hypot(mouse.x - x, mouse.y - y) < 70) drawHexagon(ctx, x, y, hexSize); }
+                    }
+                    ctx.strokeStyle = 'rgba(168, 85, 247, 0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 70, 0, Math.PI*2); ctx.stroke();
+                    document.getElementById('dragonflyScore').innerText = Math.floor(dragonflyData.score / 12) + " 隻";
+                }
+
+                // 7. 天之眼：蜜蜂紫外線光譜
+                if (currentTab === 'bee') {
+                    const cvs = document.getElementById('beeCanvas'); const ctx = cvs.getContext('2d'); ctx.clearRect(0,0,cvs.width,cvs.height);
+                    ctx.fillStyle = isTouchActive ? '#1e1b4b' : '#292524'; ctx.fillRect(0,0,cvs.width,cvs.height);
+                    beeData.flowers.forEach(f => {
+                        ctx.fillStyle = isTouchActive ? '#4338ca' : '#ef4444'; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
+                        if(isTouchActive) {
+                            ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.5, 0, Math.PI*2); ctx.stroke();
+                            ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.2, 0, Math.PI*2); ctx.stroke();
+                            if(Math.hypot(mouse.x - f.x, mouse.y - f.y) < f.r * 0.25 && beeData.score < 100) beeData.score += 0.3;
+                        } else { ctx.fillStyle = '#fde047'; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.2, 0, Math.PI*2); ctx.fill(); }
+                    });
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(mouse.x - 8, mouse.y); ctx.lineTo(mouse.x + 8, mouse.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(mouse.x, mouse.y - 8); ctx.lineTo(mouse.x, mouse.y + 8); ctx.stroke();
+                    document.getElementById('beeScore').innerText = Math.floor(beeData.score) + "%";
+                }
+
+                // 8. 天之眼：海雕冰川消融史
+                if (currentTab === 'eagle') {
+                    const cvs = document.getElementById('eagleCanvas'); const ctx = cvs.getContext('2d'); const w = cvs.width; const h = cvs.height; ctx.clearRect(0,0,w,h);
+                    const currentYear = document.getElementById('yearSlider').value; const meltRatio = (currentYear - 2000) / 26;
+                    ctx.fillStyle = blendColor('#ffffff', '#475569', meltRatio); ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(w * 0.3, h * 0.3 + (meltRatio * 60)); ctx.lineTo(w * 0.7, h * 0.5 + (meltRatio * 40)); ctx.lineTo(w, h); ctx.fill();
+                    ctx.fillStyle = blendColor('#e2e8f0', '#1e293b', meltRatio); ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(w * 0.5, h * 0.6); ctx.lineTo(w, h); ctx.fill();
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.8)'; ctx.save(); ctx.translate(mouse.x, mouse.y); ctx.beginPath(); ctx.moveTo(0, -6); ctx.quadraticCurveTo(-40, -18, -60, 0); ctx.quadraticCurveTo(-20, -3, 0, 10); ctx.quadraticCurveTo(20, -3, 60, 0); ctx.quadraticCurveTo(40, -18, 0, -6); ctx.fill(); ctx.restore();
+                }
+
+                // 9. 天之眼：《擬鳥》特展生死避障
+                if (currentTab === 'projection') {
+                    const cvs = document.getElementById('projectionCanvas'); const ctx = cvs.getContext('2d'); const w = cvs.width; const h = cvs.height; ctx.clearRect(0,0,w,h);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; for(let i=0; i<4; i++) ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+                    if(birdData.alive) {
+                        obstacleTimer++; if(obstacleTimer % 90 === 0) spawnBirdObstacle(w);
+                        if(birdKeys.left) birdData.vx -= 0.55; if(birdKeys.right) birdData.vx += 0.55;
+                        birdData.vx *= 0.88; birdData.x += birdData.vx;
+                        if(birdData.x < birdData.r) { birdData.x = birdData.r; birdData.vx = 0; } if(birdData.x > w - birdData.r) { birdData.x = w - birdData.r; birdData.vx = 0; }
+                        birdData.mileage += 3;
+                    }
+                    birdData.pm25Opacity = Math.max(0, birdData.pm25Opacity - 0.006);
+                    birdData.obstacles.forEach((o, idx) => {
+                        o.y += o.speed;
+                        if(o.type === 'building') {
+                            ctx.fillStyle = 'rgba(56, 189, 248, 0.4)'; ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5; ctx.fillRect(o.x - o.w/2, o.y, o.w, o.h); ctx.strokeRect(o.x - o.w/2, o.y, o.w, o.h);
+                            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '9px sans-serif'; ctx.fillText("🏢 玻璃大樓", o.x - o.w/2 + 3, o.y + 20);
+                        } else if(o.type === 'pylon') {
+                            ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x - o.w/2, o.y + o.h); ctx.lineTo(o.x + o.w/2, o.y + o.h); ctx.closePath(); ctx.stroke();
+                            ctx.fillStyle = '#ef4444'; ctx.font = '9px sans-serif'; ctx.fillText("⚡ 電網", o.x - 12, o.y + o.h - 8);
+                        } else if(o.type === 'smog') {
+                            let grad = ctx.createRadialGradient(o.x, o.y + o.h/2, 5, o.x, o.y + o.h/2, o.w/2); grad.addColorStop(0, 'rgba(148, 163, 184, 0.6)'); grad.addColorStop(1, 'rgba(148, 163, 184, 0)');
+                            ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(o.x, o.y + o.h/2, o.w/2, 0, Math.PI*2); ctx.fill();
+                        }
+                        if(birdData.alive && o.type !== 'smog') {
+                            if (birdData.x + birdData.r > o.x - o.w/2 && birdData.x - birdData.r < o.x + o.w/2 && birdData.y + birdData.r > o.y && birdData.y - birdData.r < o.y + o.h) birdData.alive = false;
+                        } else if(birdData.alive && o.type === 'smog') { if (Math.hypot(birdData.x - o.x, birdData.y - (o.y + o.h/2)) < o.w/2) birdData.pm25Opacity = Math.min(0.85, birdData.pm25Opacity + 0.03); }
+                        if(o.y > h + 100) birdData.obstacles.splice(idx, 1);
+                    });
+                    if(birdData.pm25Opacity > 0) { ctx.fillStyle = `rgba(15, 23, 42, ${birdData.pm25Opacity})`; ctx.fillRect(0,0,w,h); }
+                    ctx.save(); ctx.translate(birdData.x, birdData.y); ctx.rotate(birdData.vx * 0.05); ctx.fillStyle = birdData.alive ? 'rgba(6, 182, 212, 0.95)' : '#475569';
+                    ctx.beginPath(); ctx.moveTo(0, -10); ctx.quadraticCurveTo(-35, -22, -55, 3); ctx.quadraticCurveTo(-20, 0, 0, 14); ctx.quadraticCurveTo(20, 0, 55, 3); ctx.quadraticCurveTo(35, -22, 0, -10); ctx.fill(); ctx.restore();
+
+                    document.getElementById('birdDistanceLabel').innerText = birdData.mileage + " m";
+                    document.getElementById('birdSpeedLabel').innerText = birdData.alive ? `${40 + Math.floor(Math.abs(birdData.vx) * 2.2)} km/h` : `0 km/h`;
+                    const statusText = document.getElementById('projectionScore');
+                    if(!birdData.alive) {
+                        statusText.innerText = "終止 (環境撞擊)"; statusText.style.color = 'var(--accent-projection)';
+                    } else { statusText.innerText = birdData.pm25Opacity > 0.4 ? "霾害嚴重影響" : "安全翱翔中"; statusText.style.color = birdData.pm25Opacity > 0.4 ? '#eab308' : '#34d399'; }
+                }
+            }
+            requestAnimationFrame(mainGameLoop);
+        }
+        mainGameLoop();
+    </script>
+</body>
+</html>
+
+```
